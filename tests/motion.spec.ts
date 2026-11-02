@@ -1,0 +1,44 @@
+import {test,expect} from '@playwright/test';
+test('shape morph and locked modes preserve playback',async({page})=>{
+ await page.goto('/'); await page.getByRole('button',{name:'Play',exact:true}).click();
+ await expect(page.locator('audio')).toHaveJSProperty('paused',false);
+ await page.waitForTimeout(600);
+ await expect(page.locator('.apc-transport')).toHaveCSS('stroke','none');
+ await expect(page.locator('.apc-transport')).not.toHaveCSS('fill','none');
+ await expect(page.locator('.apc-transport')).toHaveCSS('opacity','1');
+ await page.getByLabel('Behaviour').selectOption('compact');
+ await expect(page.locator('.apc-toggle')).toHaveCount(0);
+ await expect(page.locator('audio')).toHaveJSProperty('paused',false);
+ await expect(page.locator('.apc-play')).toHaveCSS('transform','none');
+ await page.getByLabel('Behaviour').selectOption('expanded');
+ await expect(page.locator('.apc-toggle')).toHaveCount(0);
+ await expect(page.locator('audio')).toHaveJSProperty('paused',false);
+ await page.waitForTimeout(900);
+ const gap=await page.evaluate(()=>{const p=document.querySelector('.apc-play')!.getBoundingClientRect(),s=document.querySelector('.apc-rim')!.getBoundingClientRect();return s.left-p.right});
+ expect(gap).toBeCloseTo(2,1);
+ await page.screenshot({path:'review/motion-v2/locked-expanded.png'});
+ await page.getByRole('button',{name:'Pause',exact:true}).click();
+ await page.waitForTimeout(600);
+ await page.getByLabel('Behaviour').selectOption('toggle');
+ await page.waitForTimeout(900);
+ await page.getByRole('button',{name:'Collapse waveform'}).click();await page.waitForTimeout(900);
+ const snapshots:number[]=[];
+ await page.getByRole('button',{name:'Expand waveform'}).click();
+ for(let i=0;i<5;i++){await page.waitForTimeout(90);snapshots.push(await page.locator('.apc-rim').evaluate(e=>e.getBoundingClientRect().width));await page.screenshot({path:`review/motion-v2/phase-${i}.png`});}
+ expect(snapshots[0]).toBeGreaterThan(32); expect(snapshots[0]).toBeLessThan(400);expect(snapshots.at(-1)).toBeGreaterThan(400);
+ await page.getByRole('button',{name:'Collapse waveform'}).click();await page.waitForTimeout(80);await page.getByRole('button',{name:'Expand waveform'}).click();await page.waitForTimeout(1000);
+ await expect(page.locator('.apc-rim')).toHaveCSS('width','410px');
+ console.log('Expansion widths:',snapshots);
+});
+test('reduced motion snaps glyph and removes transitional bridge',async({page})=>{
+ await page.emulateMedia({reducedMotion:'reduce'});await page.goto('/');
+ await expect(page.locator('.apc-bridge')).toHaveCount(0);
+ await page.getByRole('button',{name:'Play',exact:true}).click();
+ await expect(page.locator('.apc-transport')).toHaveAttribute('d',/M7 4 L10 4 L10 20 L7 20Z/);
+ await page.getByLabel('Behaviour').selectOption('compact');
+ await expect(page.getByRole('slider')).toHaveCount(0);
+ await expect(page.locator('.apc-toggle')).toHaveCount(0);
+ await page.setViewportSize({width:320,height:740});await page.getByLabel('Behaviour').selectOption('expanded');
+ await expect.poll(()=>page.locator('.apc-rim').evaluate(e=>e.getBoundingClientRect().right)).toBeLessThanOrEqual(297);
+ await page.getByLabel('Appearance').selectOption('dark');await page.screenshot({path:'review/motion-v2/mobile-dark.png'});
+});
