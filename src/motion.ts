@@ -1,5 +1,5 @@
-// The slower, softer morph is an explicit user-requested exception to Fluid's
-// .24s slow tier. Physics springs preserve velocity when reversed mid-flight.
+// A soft spring gives the focal morph time to stretch and settle.
+// Physics springs preserve velocity when reversed mid-flight.
 export const playerMotion = {
   bubble: { stiffness: 145, damping: 24, mass: 1.1 },
   glyph: { stiffness: 230, damping: 26, mass: .85 },

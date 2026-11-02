@@ -44,7 +44,8 @@ test('reduced motion, source replacement and unavailable media',async({page})=>{
 test('pointer scrubbing, waveform fidelity and no layout growth',async({page})=>{
  await page.goto('/');
  await expect.poll(()=>page.locator('.apc-wave rect').evaluateAll(nodes=>Math.max(...nodes.map(n=>Number(n.getAttribute('height')))))).toBeGreaterThan(20);
- const slider=page.getByRole('slider');const box=(await slider.boundingBox())!;
+ await expect(page.locator('.apc-rim')).toHaveCSS('width','410px');
+ const slider=page.getByRole('slider');await expect(slider).toBeEnabled();const box=(await slider.boundingBox())!;
  await page.mouse.move(box.x+box.width*.2,box.y+box.height/2);await page.mouse.down();
  await page.mouse.move(box.x+box.width*.7,box.y+box.height/2,{steps:8});await page.mouse.up();
  await expect.poll(()=>page.locator('audio').evaluate((e:HTMLAudioElement)=>e.currentTime)).toBeGreaterThan(15);

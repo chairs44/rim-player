@@ -1,41 +1,77 @@
 # Rim Player
-Local single-track React audio player, built from the approved Paper minimal-rim study. Private repository; not deployed or integrated into the portfolio.
 
-## Run
-```sh
-npm install
-npm run dev
+A single-track audio player for React, with a seekable waveform and a liquid transition between compact and expanded controls.
+
+- Playback continues when the waveform collapses.
+- Light and dark themes, keyboard controls, and reduced-motion support.
+- Plain CSS and Motion. No shadcn or UI framework required.
+
+## Use
+
+Copy [`AudioPlayer.tsx`](src/AudioPlayer.tsx), [`motion.ts`](src/motion.ts), and [`player.css`](src/player.css) into the same folder in your React project, then install Motion:
+
+```bash
+npm install motion@^14.9.0
 ```
-Open http://127.0.0.1:5178. The server binds to loopback only.
-
-```sh
-npm run build
-npm test
-```
-Tests use locally installed Google Chrome. Start the dev server first.
-
-## Component
-Copy `src/AudioPlayer.tsx`, `src/motion.ts`, and `src/player.css` into a React project with `motion` installed.
 
 ```tsx
-<AudioPlayer src="/track.mp3" label="My recording" />
-<AudioPlayer src="/track.mp3" initialExpanded={false} />
-<AudioPlayer src="/track.mp3" mode="expanded" theme="dark" />
+import { AudioPlayer } from './components/rim-player/AudioPlayer';
+
+export default function Example() {
+  return <AudioPlayer src="/audio/track.mp3" label="Track preview" />;
+}
 ```
 
-Props: `src` required; `label` defaults to Audio; `initialExpanded` optional (otherwise desktop expanded/mobile compact at 640px); `mode` toggle/compact/expanded, default toggle; `theme` light/dark, default light; `className` and `style` optional. Manual expansion survives resizing. Locked modes omit the toggle entirely: compact is Play/Pause alone; expanded is Play/Pause plus waveform. Source changes reset audio, expansion never does. Apply CSS custom properties from player.css for colors; dark overrides may also be customized with CSS specificity.
+Provided as source files, not an npm package. Tested with React 19.3 and Motion 14.9. Your build must support TypeScript and CSS imports.
 
-Play/Pause: Space or Enter on the button. Seek: focus waveform, arrows ±5 seconds, Home/End start/end. Pointer dragging works through a native range. No autoplay. Unavailable audio shows a retry instruction; if decoding fails independently, playback and seeking still work with a flat placeholder. OS reduced motion removes travel and geometry animation.
+## Props
 
-## Local demo
-Includes a generated 24-second musical test signal, not a portfolio recording. Choose an audio file to audition it in-browser; it is never uploaded. Demo input is limited to 40 MB. Waveform decoding loads the full file into memory and computes normalized RMS bars from the first channel, so this prototype is for short clips. Remote sources need appropriate CORS headers for waveform decoding. Streaming/live media and long podcasts need a precomputed-peaks path before release. Minimum embed width is 144px.
+| Prop | Type | Default |
+| --- | --- | --- |
+| `src` | `string` | Required audio URL |
+| `label` | `string` | `'Audio'` |
+| `mode` | `'toggle' \| 'compact' \| 'expanded'` | `'toggle'` |
+| `initialExpanded` | `boolean` | Expanded at viewport widths ≥640px |
+| `theme` | `'light' \| 'dark'` | `'light'` |
+| `className` | `string` | `''` |
+| `style` | `CSSProperties` | — |
 
-## Validation and limits
-TypeScript + production build and six Chromium interaction tests. Checked desktop/light, 320px/dark, reduced motion, playback independence, end/replay, keyboard/pointer seeking, file replacement, errors, locked modes and rapid reversals. Browser playback state was verified; subjective listening and morph approval remain user review. Safari/Firefox and screen-reader/device testing remain before public release. Subtle approved borders are preserved and may need a separate contrast pass for release.
+`compact` shows Play/Pause only; `expanded` keeps the waveform visible. Both omit the toggle. In toggle mode, a manual choice survives resizing. Changing `src` resets the player.
 
-Motion APIs: https://motion.dev/docs/react-use-spring and https://motion.dev/docs/react-use-transform. The local Vite client build warns about upstream Motion `use client` directives; it still builds successfully. No server-component deployment is configured.
+```tsx
+<AudioPlayer src="/audio/track.mp3" mode="expanded" theme="dark" />
+<AudioPlayer src="/audio/track.mp3" initialExpanded={false} />
+```
 
-## Motion
-The small control stretches into the larger button on their shared centreline, is absorbed, then emerges on the other side. The main body briefly inflates during absorption. One persistent SVG filter holds the fused silhouette during contact and smoothly returns to the original 1px outlines near rest. No last-frame filter switch. Compact Play is a 53×53 circle; expanded Play is 60×53; the toggle is 32×32. Both transport glyphs are filled, with a compound-path morph between them.
+## Design and behavior
 
-The waveform grows and retracts at full opacity. One interruptible spring coordinates the sequence (stiffness 145, damping 24, mass 1.1). Reduced motion jumps directly to the destination. Fluid Functionalism informed the motion approach; no registry components or additional dependencies were needed. The deliberately slower focal transition is an exception to its usual .24-second tier.
+Compact Play is a 53px circle; expanded Play is 60×53px. The 32px toggle merges through its centreline. The waveform grows to 410×48px and contracts to fit its container. Expandable embeds need at least 144px of width.
+
+An interruptible spring coordinates the SVG shells and waveform. Reduced motion skips spatial animation. Colors can be overridden with the `--apc-*` CSS properties. See [design and technical specs](docs/specification.md).
+
+Use Space/Enter on buttons. Focus the waveform to seek with Left/Right (5 seconds) or Home/End. Pointer and touch input are supported. Audio never autoplays.
+
+## Limits
+
+Designed for short, finite clips. Waveform generation downloads and decodes the full file, using the first audio channel. Remote audio needs CORS permission for waveform decoding; if decoding fails, playback and seeking can still work. Long recordings and live streams are outside this version's scope.
+
+The component has no analytics, upload service, or storage. It requests the audio URL you provide. Files selected in the demo stay in the browser; the demo limits them to 40 MB. That size limit is not enforced by the component.
+
+## Development
+
+Use Node.js 22.12+ and npm.
+
+```bash
+npm ci --ignore-scripts
+npm run dev
+```
+
+Open [localhost:5178](http://127.0.0.1:5178). The demo includes generated test audio.
+
+```bash
+npx playwright install firefox webkit
+npm test -- --workers=3
+npm run build
+```
+
+Tests also require Google Chrome. The suite covers Chromium, Firefox and WebKit: 38 checks pass, with one unsupported Firefox touch-emulation case skipped. Physical-device and screen-reader testing remains open. See [compatibility notes](docs/compatibility.md).

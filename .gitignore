@@ -5,3 +5,8 @@ playwright-report/
 .DS_Store
 review/
 *.tsbuildinfo
+.env
+.env.*
+!.env.example
+*.pem
+*.key

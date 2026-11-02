@@ -1,4 +1,6 @@
-import { useEffect, useId, useMemo, useRef, useState, type CSSProperties } from 'react';
+'use client';
+
+import { useEffect, useLayoutEffect, useId, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { motion, useMotionValue, useReducedMotion, useSpring, useTransform } from 'motion/react';
 import './player.css';
 import { playerMotion, transportPath, liquidEnvelope } from './motion';
@@ -20,7 +22,8 @@ function Player({ src, label = 'Audio', initialExpanded, mode = 'toggle', theme 
   const host = useRef<HTMLDivElement>(null);
   const audio = useRef<HTMLAudioElement>(null);
   const userChoice = useRef(false);
-  const [expanded, setExpanded] = useState(initialExpanded ?? (typeof window !== 'undefined' && window.innerWidth >= 640));
+  const initialized = useRef(false);
+  const [expanded, setExpanded] = useState(initialExpanded ?? false);
   const open = mode === 'expanded' || (mode !== 'compact' && expanded);
   const [available, setAvailable] = useState(506);
   const [playing, setPlaying] = useState(false);
@@ -72,6 +75,14 @@ function Player({ src, label = 'Audio', initialExpanded, mode = 'toggle', theme 
   });
   const bridgeOpacity = useTransform(phase, [0,.15,.7,1], [0,1,.8,0]);
   const revealOpacity = useTransform(phase, p => p <= .001 ? 0 : 1);
+  useLayoutEffect(() => {
+    // Responsive collapse or a locked-mode change must not strand keyboard
+    // focus in the now-hidden seek control.
+    const node = host.current;
+    if (!open && node?.querySelector('.apc-rim')?.contains(document.activeElement)) {
+      node.querySelector<HTMLButtonElement>(hasToggle ? '.apc-toggle' : '.apc-play')?.focus();
+    }
+  }, [open, hasToggle]);
   useEffect(() => { toggleMode.set(hasToggle ? 1 : 0); }, [hasToggle, toggleMode]);
   useEffect(() => { if (reduce) glyph.jump(playing ? 1 : 0); else glyph.set(playing ? 1 : 0); }, [playing, reduce, glyph]);
   useEffect(() => { widthValue.set(screenWidth); }, [screenWidth, widthValue]);
@@ -82,9 +93,18 @@ function Player({ src, label = 'Audio', initialExpanded, mode = 'toggle', theme 
     observer.observe(node);
     const query = matchMedia('(min-width: 640px)');
     const resize = () => { if (!userChoice.current && initialExpanded === undefined) setExpanded(query.matches); };
+    // Server and hydration render the same state. Adopt the viewport only
+    // after mount, jumping the initial shell rather than animating an entrance.
+    if (!initialized.current) {
+      initialized.current = true;
+      if (initialExpanded === undefined) {
+        resize();
+        phase.jump(mode === 'expanded' || (mode === 'toggle' && query.matches) ? 1 : 0);
+      }
+    }
     query.addEventListener('change', resize);
     return () => { observer.disconnect(); query.removeEventListener('change', resize); };
-  }, [initialExpanded]);
+  }, [initialExpanded, mode, phase]);
   useEffect(() => {
     const abort = new AbortController();
     let context: AudioContext | undefined;
@@ -157,7 +177,7 @@ function Player({ src, label = 'Audio', initialExpanded, mode = 'toggle', theme 
       onEnded={() => { setPlaying(false); setWaiting(false); }}
       onError={() => { setPlaying(false); setWaiting(false); setError('Audio unavailable. Press Play to retry or choose another file.'); }}/>
     <div className="apc-stage">
-      {hasToggle ? <svg className="apc-shells" width="150" height="53" aria-hidden="true">
+      {hasToggle ? <svg className="apc-shells" width="100" height="53" aria-hidden="true">
         <defs><filter id={fusionId} x="-25%" y="-60%" width="150%" height="220%" colorInterpolationFilters="sRGB">
           <motion.feGaussianBlur in="SourceAlpha" stdDeviation={reduce ? 0 : fusionBlur}/>
           <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -9" result="body"/>
@@ -172,7 +192,7 @@ function Player({ src, label = 'Audio', initialExpanded, mode = 'toggle', theme 
           <motion.circle cx="16" cy="26.5" r="15.5" style={{x:toggleX,scaleX:reduce?1:toggleScaleX,scaleY:reduce?1:toggleScaleY}}/>
         </motion.g>
       </svg> : null}
-      {hasToggle && !reduce ? <svg className="apc-bridge" width="150" height="60" aria-hidden="true"><motion.path d={bridgePath} style={{opacity:bridgeOpacity}}/></svg> : null}
+      {hasToggle && !reduce ? <svg className="apc-bridge" width="100" height="60" aria-hidden="true"><motion.path d={bridgePath} style={{opacity:bridgeOpacity}}/></svg> : null}
       <motion.button type="button" className="apc-play" style={{ x: playX, width: playWidth, scaleX: reduce ? 1 : playScaleX, scaleY: reduce ? 1 : playScaleY }} onClick={togglePlayback} aria-label={playing ? 'Pause' : 'Play'} aria-busy={waiting}>
         <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
           <motion.path className="apc-transport" d={glyphPath} fillRule="evenodd"/>
