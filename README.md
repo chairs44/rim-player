@@ -2,6 +2,8 @@
 
 A single-track audio player for React, with a seekable waveform and a liquid transition between compact and expanded controls.
 
+![Rim Player expanding and collapsing while playback continues](docs/media/rim-player.gif)
+
 - Playback continues when the waveform collapses.
 - Light and dark themes, keyboard controls, and reduced-motion support.
 - Plain CSS and Motion. No shadcn or UI framework required.
