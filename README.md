@@ -1,6 +1,6 @@
 # Rim Player
 
-A single-track audio player for React, with a seekable waveform and a liquid transition between compact and expanded controls.
+A React audio player with a seekable waveform and a liquid transition between compact and expanded controls. Five optional greyscale layouts cover single recordings and playlists.
 
 ![Rim Player expanding and collapsing while playback continues](docs/media/rim-player.gif)
 
@@ -10,7 +10,7 @@ A single-track audio player for React, with a seekable waveform and a liquid tra
 
 ## Use
 
-Copy [`AudioPlayer.tsx`](src/AudioPlayer.tsx), [`motion.ts`](src/motion.ts), and [`player.css`](src/player.css) into the same folder in your React project, then install Motion:
+Copy [`AudioPlayer.tsx`](src/AudioPlayer.tsx), [`useWaveform.ts`](src/useWaveform.ts), [`motion.ts`](src/motion.ts), and [`player.css`](src/player.css) into the same folder in your React project, then install Motion:
 
 ```bash
 npm install motion@^14.9.0
@@ -47,6 +47,30 @@ Provided as source files, not an npm package. Tested with React 19.3 and Motion 
 
 ## Design and behavior
 
+### Flat greyscale variants
+
+Open the [local comparison](http://127.0.0.1:5178/variants/) to audition five alternatives. `RimPlayerVariant` takes a single `track` for `fine-rail` and `waveform`, or a `tracks` array for `inline`, `inline-no-time` and `shared`.
+
+```tsx
+import { RimPlayerVariant, type RimTrack } from './RimPlayerVariant';
+
+const tracks: RimTrack[] = [
+  { title: 'Episode excerpt', src: '/audio/excerpt.mp3', duration: 302 },
+  { title: 'Series theme', src: '/audio/theme.mp3', duration: 55 },
+];
+
+<RimPlayerVariant variant="waveform" track={tracks[0]} />
+<RimPlayerVariant variant="shared" tracks={tracks} label="Best Practice" />
+```
+
+Each player starts paused. A playlist shares one audio element, advances through its queue and stops after the final track. `initialTrack` selects the starting row by zero-based index. Duration hints are optional, and measured metadata takes priority. Give entries with the same URL distinct `id` values. Pass a normalized `waveform` array to skip decoding, or let Rim generate it from the recording. A native range supports touch, drag, arrow keys and Home/End.
+
+The alternate component uses [RimPlayerVariant.tsx](src/RimPlayerVariant.tsx), [useRimPlaylist.ts](src/useRimPlaylist.ts), the shared waveform decoder, [audiocn’s time formatter](src/audioTime.ts), [variants.css](src/variants.css) and its [Geist font](src/assets/geist-variable.woff2). The [audiocn](docs/licenses/audiocn.txt) and [Geist](docs/licenses/geist.txt) licences accompany these files. No additional runtime dependency is required.
+
+The portable comparison includes three local demo recordings. In development, the gallery can also read `review/variant-audio/sets.json` with an array of `{ id, name, tracks }` collections. This ignored directory holds this checkout’s M/P/J and Best Practice listening copies. The build includes only the portable samples.
+
+### Original player
+
 Compact Play is a 53px circle; expanded Play is 60×53px. The 32px toggle merges through its centreline. The waveform grows to 410×48px and contracts to fit its container. Expandable embeds need at least 144px of width.
 
 An interruptible spring coordinates the SVG shells and waveform. Reduced motion skips spatial animation. Colors can be overridden with the `--apc-*` CSS properties. See [design and technical specs](docs/specification.md).
@@ -76,4 +100,4 @@ npm test -- --workers=3
 npm run build
 ```
 
-Tests also require Google Chrome. The suite covers Chromium, Firefox and WebKit: 38 checks pass, with one unsupported Firefox touch-emulation case skipped. Physical-device and screen-reader testing remains open. See [compatibility notes](docs/compatibility.md).
+Tests also require Google Chrome. The suite covers the original player and all five variants in Chromium, Firefox and WebKit. One original-player test skips Firefox’s unsupported touch emulation. Physical-device and screen-reader testing remains open. See [compatibility notes](docs/compatibility.md).

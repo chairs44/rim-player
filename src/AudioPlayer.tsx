@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, useId, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { motion, useMotionValue, useReducedMotion, useSpring, useTransform } from 'motion/react';
 import './player.css';
+import { useWaveform } from './useWaveform';
 import { playerMotion, transportPath, liquidEnvelope } from './motion';
 
 export type AudioPlayerProps = {
@@ -30,8 +31,7 @@ function Player({ src, label = 'Audio', initialExpanded, mode = 'toggle', theme 
   const [duration, setDuration] = useState(0);
   const [position, setPosition] = useState(0);
   const [error, setError] = useState('');
-  const [peaks, setPeaks] = useState<number[]>([]);
-  const [waveError, setWaveError] = useState(false);
+  const { peaks, waveError } = useWaveform(src);
   const [waiting, setWaiting] = useState(false);
   const screenId = useId();
   const fusionId = `fusion-${screenId.replace(/[^a-zA-Z0-9]/g, "")}`;
@@ -105,34 +105,6 @@ function Player({ src, label = 'Audio', initialExpanded, mode = 'toggle', theme 
     query.addEventListener('change', resize);
     return () => { observer.disconnect(); query.removeEventListener('change', resize); };
   }, [initialExpanded, mode, phase]);
-  useEffect(() => {
-    const abort = new AbortController();
-    let context: AudioContext | undefined;
-    (async () => {
-      try {
-        const response = await fetch(src, { signal: abort.signal });
-        if (!response.ok) throw new Error('Media request failed');
-        const bytes = await response.arrayBuffer();
-        if (abort.signal.aborted) return;
-        context = new AudioContext();
-        const buffer = await context.decodeAudioData(bytes);
-        if (abort.signal.aborted) return;
-        const data = buffer.getChannelData(0);
-        const count = 512;
-        const values = Array.from({ length: count }, (_, i) => {
-          const start = Math.floor(i * data.length / count);
-          const end = Math.floor((i + 1) * data.length / count);
-          let sum = 0;
-          for (let j = start; j < end; j++) sum += data[j] * data[j];
-          return Math.sqrt(sum / Math.max(1, end - start));
-        });
-        const max = Math.max(...values, .00001);
-        setPeaks(values.map(p => p / max));
-      } catch { if (!abort.signal.aborted) setWaveError(true); }
-      finally { if (context && context.state !== 'closed') void context.close(); }
-    })();
-    return () => { abort.abort(); };
-  }, [src]);
   useEffect(() => {
     if (!playing) return;
     let frame = 0;

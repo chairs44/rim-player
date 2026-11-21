@@ -1,0 +1,169 @@
+@font-face {
+  font-family: 'Rim Geist';
+  src: url('./assets/geist-variable.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+.rim-variant {
+  --rim-case: #f5f5f5;
+  --rim-display: #f0f0f0;
+  --rim-border: #ddd;
+  --rim-selected: #e8e8e8;
+  --rim-text: #202020;
+  --rim-ink: #494949;
+  --rim-track: #737373;
+  --rim-wave: #808080;
+  --rim-wave-played: #383838;
+  --rim-head: #262626;
+  width: 100%;
+  max-width: 344px;
+  min-width: 0;
+  color: var(--rim-text);
+  color-scheme: light;
+  font: 500 14px/18px 'Rim Geist', Geist, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.rim-variant, .rim-variant * { box-sizing: border-box; }
+.rim-variant audio { display: none; }
+.rim-variant button {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.rim-variant :is(button, input):focus-visible { outline: 2px solid var(--rim-ink); outline-offset: 1px; }
+.rim-variant button:disabled { opacity: .35; cursor: default; }
+.rim-variant button svg { display: block; width: 16px; height: 16px; fill: currentColor; }
+.rim-shell { width: 100%; background: var(--rim-case); border: 1px solid var(--rim-border); }
+.rim-single { height: 40px; display: flex; align-items: center; gap: 8px; padding: 3px 4px; border-radius: 99px; }
+.rim-variant[data-rim-variant="waveform"] .rim-single { height: 42px; }
+.rim-play, .rim-disc { border-radius: 50%; flex: none; }
+.rim-disc {
+  display: grid;
+  place-items: center;
+  width: var(--rim-disc-size, 32px);
+  height: var(--rim-disc-size, 32px);
+  background: var(--rim-case);
+  border: 1px solid var(--rim-border);
+}
+.rim-disc[data-playing="true"] { background: var(--rim-ink); border-color: var(--rim-ink); color: #fcfcfc; }
+.rim-variant button:hover:not(:disabled) .rim-disc { border-color: var(--rim-ink); }
+.rim-display {
+  min-width: 0;
+  flex: 1;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 60px;
+  display: flex;
+  align-items: center;
+  background: var(--rim-display);
+}
+.rim-variant[data-rim-variant="waveform"] .rim-display { padding: 0 10px; }
+.rim-seek {
+  min-width: 0;
+  width: 100%;
+  height: 32px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.rim-seek input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+  touch-action: pan-y;
+}
+.rim-seek:has(input:focus-visible) { outline: 2px solid var(--rim-ink); outline-offset: 1px; border-radius: 6px; }
+.rim-seek:has(input:disabled) { opacity: .55; }
+.rim-line, .rim-filled { height: 2px; border-radius: 4px; }
+.rim-line { position: relative; width: 100%; background: var(--rim-track); }
+.rim-filled { display: block; width: var(--rim-progress); background: var(--rim-ink); }
+.rim-thumb {
+  position: absolute;
+  top: 50%;
+  left: clamp(4px, var(--rim-progress), calc(100% - 4px));
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--rim-ink);
+}
+.rim-seek svg { width: 100%; height: 22px; }
+.rim-list { border-radius: 20px; padding: 6px; }
+.rim-rows { list-style: none; margin: 0; padding: 0; }
+.rim-row { min-width: 0; }
+.rim-row[data-current="true"] { background: var(--rim-selected); }
+.rim-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: start; }
+.rim-row[data-current="true"] .rim-title { font-weight: 600; }
+.rim-time, .rim-index {
+  color: var(--rim-ink);
+  font-size: 12px;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.rim-time { text-align: end; }
+.rim-variant:is([data-rim-variant="inline"], [data-rim-variant="inline-no-time"]) .rim-row {
+  --rim-disc-size: 28px;
+  display: grid;
+  grid-template-columns: minmax(52px, min(43%, 128px)) minmax(0, 1fr) 49px;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 11px 0 8px;
+  border-radius: 13px;
+}
+.rim-variant[data-rim-variant="inline-no-time"] .rim-row { grid-template-columns: minmax(52px, min(43%, 128px)) minmax(0, 1fr); }
+.rim-variant .rim-row-play { min-width: 0; height: 38px; gap: 8px; border-radius: 12px; justify-content: flex-start; }
+.rim-variant .rim-row:not([data-current="true"]) .rim-row-play { grid-column: 1 / 3; }
+.rim-row > .rim-time { grid-column: 3; }
+.rim-transport {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 10px;
+  height: 44px;
+  border-radius: 60px;
+  background: var(--rim-display);
+  margin-bottom: 4px;
+}
+.rim-navigation { display: flex; align-items: center; gap: 2px; flex: none; }
+.rim-navigation > button { border-radius: 50%; min-width: 24px; height: 30px; }
+.rim-navigation > button:not(.rim-play) svg { width: 15px; height: 15px; }
+.rim-navigation .rim-disc { --rim-disc-size: 30px; }
+.rim-transport .rim-time { flex: 0 0 44px; }
+.rim-variant[data-rim-variant="shared"] .rim-row { border-radius: 9px; }
+.rim-variant .rim-pick {
+  display: grid;
+  grid-template-columns: 23px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  width: 100%;
+  min-height: 34px;
+  border-radius: inherit;
+  text-align: start;
+}
+.rim-pick:hover { background: var(--rim-selected); }
+.rim-status { margin: 6px 0 0; font: 13px/18px 'Rim Geist', system-ui, sans-serif; }
+@media (forced-colors: active) {
+  .rim-variant { --rim-ink: ButtonText; --rim-track: GrayText; --rim-wave: GrayText; --rim-wave-played: CanvasText; --rim-head: CanvasText; }
+  .rim-seek, .rim-disc { forced-color-adjust: none; }
+  .rim-disc { color: ButtonText; background: ButtonFace; border-color: ButtonText; }
+  .rim-disc[data-playing="true"] { color: HighlightText; background: Highlight; border-color: Highlight; }
+  .rim-row[data-current="true"] .rim-title { text-decoration: underline; }
+}

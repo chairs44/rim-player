@@ -1,0 +1,24 @@
+body { margin: 0; }
+.rim-variants {
+  box-sizing: border-box;
+  min-height: 100svh;
+  padding: clamp(28px, 6vw, 84px) 24px;
+  background: #fcfcfc;
+  color: #202020;
+  font: 500 14px/20px 'Rim Geist', Geist, system-ui, sans-serif;
+}
+.variant-page { width: 100%; max-width: 784px; margin-inline: auto; }
+.variant-header { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; }
+.variant-header h1 { margin: 0; font-size: clamp(26px, 4vw, 38px); line-height: 1.12; font-weight: 600; letter-spacing: -.035em; }
+.variant-header a { color: #494949; text-underline-offset: 3px; white-space: nowrap; }
+.variant-recordings { display: flex; gap: 10px; align-items: center; margin-top: 24px; color: #494949; }
+.variant-recordings select { font: inherit; color: #202020; background: #f5f5f5; border: 1px solid #ddd; border-radius: 6px; padding: 5px 8px; }
+.variant-specimens { display: grid; grid-template-columns: repeat(2, minmax(0,344px)); justify-content: space-between; gap: 44px 32px; margin-top: 28px; border-top: 1px solid #ddd; padding-top: 30px; }
+.variant-specimen { min-width: 0; }
+.variant-specimen h2 { margin: 0 0 18px; font-size: 17px; line-height: 21px; letter-spacing: -.02em; font-weight: 600; }
+.variant-header a:focus-visible, .variant-recordings select:focus-visible { outline: 2px solid #494949; outline-offset: 3px; }
+@media (max-width: 650px) {
+  .variant-page { max-width: 420px; }
+  .variant-specimens { grid-template-columns: minmax(0,344px); gap: 30px; }
+  .variant-header { flex-wrap: wrap; }
+}
